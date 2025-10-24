@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎬 JSON 영상 프롬프트 빌더01</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* CSS 변수 설정 */
+        :root {
+            --background-color: #ffffff;
+            --text-color: #1f2937;
+            --text-color-secondary: #4b5563;
+            --card-background: #ffffff;
+            --panel-background: #f3f4f6;
+            --border-color: #d1d5db;
+            --accent-color: #4f46e5;
+            --accent-color-hover: #4338ca;
+            --error-color: #ef4444;
+        }
+
+        .dark:root {
+            --background-color: #111827;
+            --text-color: #f9fafb;
+            --text-color-secondary: #9ca3af;
+            --card-background: #1f2937;
+            --panel-background: #374151;
+            --border-color: #4b5563;
+            --accent-color: #6366f1;
+            --accent-color-hover: #4f46e5;
+        }
+        
+        /* 기본 스타일 */
+        body { 
+            font-family: 'Noto Sans KR', sans-serif; 
+            background-color: var(--background-color); 
+            color: var(--text-color); 
+            font-size: 14px; 
+        }
+        .card { 
+            background-color: var(--card-background); 
+            border: 1px solid var(--border-color); 
+        }
+        .input-field, select, textarea { 
+            width: 100%; 
+            padding: 0.5rem; 
+            border-radius: 0.375rem; 
+            border: 1px solid var(--border-color); 
+            background-color: var(--panel-background, #f3f4f6); 
+            color: var(--text-color); 
+            margin-top: 0.25rem; 
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .input-field:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px var(--accent-color-hover);
+        }
+        .dark .input-field, .dark select, .dark textarea { 
+            background-color: #2a2a3e; /* 어두운 입력 필드 배경 */
+            border-color: #4b5563;
+        }
+        .btn { 
+            padding: 0.5rem 1rem; 
+            border-radius: 0.375rem; 
+            font-weight: 500; 
+            cursor: pointer; 
+            transition: background-color 0.2s, opacity 0.2s; 
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-primary { 
+            background-color: var(--accent-color); 
+            color: white; 
+        } 
+        .btn-primary:hover:not(:disabled) { 
+            background-color: var(--accent-color-hover); 
+        }
+        .btn-secondary { 
+            background-color: var(--panel-background, #e5e7eb); 
+            border: 1px solid var(--border-color); 
+            color: var(--text-color-secondary); 
+        } 
+        .dark .btn-secondary { 
+            background-color: #374151; /* 어두운 2차 버튼 */
+            border-color: #4b5563;
+        } 
+        .btn-secondary:hover:not(:disabled) { 
+            background-color: var(--border-color); 
+            color: var(--text-color); 
+        }
+        .btn-danger { 
+            background-color: #ef4444; 
+            color: white; 
+        } 
+        .btn-danger:hover:not(:disabled) { 
+            background-color: #dc2626; 
+        }
+        
+        /* Details (접기/펴기) */
+        details summary { 
+            cursor: pointer; 
+            font-weight: 600; 
+            list-style: none; 
+        } 
+        details summary::-webkit-details-marker { 
+            display: none; 
+        }
+        details summary span.arrow { 
+            transition: transform 0.2s; 
+            display: inline-block; 
+            margin-right: 0.25rem;
+            transform: rotate(0deg); /* 기본 닫힌 상태 */
+        } 
+        details[open] summary span.arrow { 
+            transform: rotate(90deg); /* 열린 상태 */
+        }
+        
+        label { 
+            margin-bottom: 0.25rem; 
+            display: block; 
+            font-weight: 500; 
+            color: var(--text-color-secondary);
+        }
+        .description { 
+            font-size: 0.8rem; 
+            color: var(--text-color-secondary); 
+            margin-bottom: 0.5rem; 
+            margin-top: -0.1rem;
+        }
+        
+        /* 동적 아이템 (타임라인 등) */
+        .timeline-segment, .rule-item, .negative-item { 
+            border: 1px solid var(--border-color); 
+            padding: 1rem; 
+            margin-bottom: 1rem; 
+            border-radius: 0.375rem; 
+            position: relative;
+            background-color: rgba(0,0,0,0.02); /* 살짝 배경 구분 */
+        }
+        .dark .timeline-segment, .dark .rule-item, .dark .negative-item {
+            background-color: rgba(255,255,255,0.03);
+        }
+        .remove-btn { 
+            position: absolute; 
+            top: 0.5rem; 
+            right: 0.5rem; 
+            padding: 0.1rem 0.3rem; 
+            font-size: 0.7rem; 
+        }
+        
+        .hidden { display: none; }
+        
+        /* 에러 메시지 */
+        .error-message { 
+            color: var(--error-color); 
+            background-color: rgba(255, 85, 85, 0.1); 
+            border: 1px solid var(--error-color); 
+            padding: 1rem; 
+            border-radius: 6px; 
+            text-align: center; 
+        }
+        
+        /* 높이 일관성 */
+        select.input-field, input.input-field { 
+            height: 38px; 
+        } 
+        .h-10 { height: 2.5rem; } /* 40px */
+        .input-sm {
+            height: 34px;
+            font-size: 0.875rem;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+        }
+
+        /* 다크모드 대응 (OS 설정) */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background-color: var(--background-color);
+            }
+            .card {
+                background-color: var(--card-background);
+                border-color: var(--border-color);
+            }
+            .input-field, select, textarea {
+                background-color: #2a2a3e;
+                border-color: #4b5563;
+                color: var(--text-color);
+            }
+            .btn-secondary {
+                background-color: #374151;
+                border-color: #4b5563;
+                color: var(--text-color);
+            }
+            .btn-secondary:hover:not(:disabled) {
+                background-color: #4b5563;
+            }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <!-- 메인 컨텐츠 영역 -->
+    <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 sm:p-8 space-y-6 card">
+        <header class="text-center mb-6">
+              <h1 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">🎬 JSON 영상 프롬프트 빌더</h1>
+              <p class="text-gray-600 dark:text-gray-400 mt-2">상세한 영상 제작 계획을 JSON 형식으로 쉽게 구성하고 저장/불러오기 하세요.</p>
+        </header>
+
+        <!-- 저장 / 불러오기 섹션 -->
+        <section class="border-b dark:border-gray-700 pb-6 mb-6">
+              <h2 class="text-lg font-semibold mb-3">저장 / 불러오기</h2>
+              <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1.5fr] gap-4 items-end">
+                    <div>
+                        <label for="save-name">저장 이름:</label>
+                        <input type="text" id="save-name" class="input-field" placeholder="저장할 이름 입력...">
+                    </div>
+                    <button type="button" id="save-btn" class="btn btn-secondary h-10">현재 내용 저장</button>
+                    <div class="flex items-end gap-2">
+                        <div class="flex-grow">
+                            <label for="load-select">불러올 목록:</label>
+                            <select id="load-select" class="input-field h-10"></select>
+                        </div>
+                        <button type="button" id="load-btn" class="btn btn-secondary h-10 px-3">불러오기</button>
+                        <button type="button" id="delete-btn" class="btn btn-danger h-10 px-3">삭제</button>
+                    </div>
+              </div>
+        </section>
+
+        <!-- 프롬프트 폼 -->
+        <form id="prompt-form" class="space-y-6">
+            
+            <!-- Shot (촬영 정보) -->
+            <details open>
+                <summary class="text-xl mb-2 flex justify-between items-center"><span><span class="arrow">▶</span> Shot (촬영 정보)</span></summary>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div data-field="shot-composition">
+                        <label for="shot-composition-select">Composition (구도):</label>
+                        <p class="description">영상 전체 또는 특정 시간대의 기본적인 카메라 프레임 구성을 설명합니다.</p>
+                        <select id="shot-composition-select" class="input-field"></select>
+                        <input type="text" id="shot-composition-input" class="input-field hidden mt-1" placeholder="직접 입력...">
+                    </div>
+                    <div data-field="shot-lens">
+                        <label for="shot-lens-select">Lens (렌즈/촬영 방식):</label>
+                        <p class="description">사용할 렌즈 종류나 초점 거리, 촬영 방식을 지정합니다.</p>
+                        <select id="shot-lens-select" class="input-field"></select>
+                        <input type="text" id="shot-lens-input" class="input-field hidden mt-1" placeholder="직접 입력...">
+                    </div>
+                    <div data-field="shot-frame_rate">
+                        <label for="shot-frame_rate-select">Frame Rate (프레임 속도):</label>
+                        <p class="description">영상의 초당 프레임 수(fps)를 설정합니다.</p>
+                        <select id="shot-frame_rate-select" class="input-field"></select>
+                        <input type="text" id="shot-frame_rate-input" class="input-field hidden mt-1" value="30fps">
+                    </div>
+                    <div data-field="shot-camera_movement">
+                        <label for="shot-camera_movement-select">Camera Movement (카메라 움직임):</label>
+                        <p class="description">카메라가 어떻게 움직이는지 상세히 설명합니다 (핸드헬드, 트래킹 등).</p>
+                        <select id="shot-camera_movement-select" class="input-field"></select>
+                        <textarea id="shot-camera_movement-input" class="input-field hidden mt-1" placeholder="직접 입력..."></textarea>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Subject (주요 대상) -->
+            <details open>
+                <summary class="text-xl mb-2 flex justify-between items-center"><span><span class="arrow">▶</span> Subject (주요 대상)</span></summary>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div class="md:col-span-2 grid grid-cols-2 gap-4">
+                        <div><label for="subject-char1-name">인물 1 명칭:</label><input type="text" id="subject-char1-name" class="input-field" placeholder="예: 할머니"></div>
+                        <div><label for="subject-char2-name">인물 2 명칭:</label><input type="text" id="subject-char2-name" class="input-field" placeholder="예: 남자"></div>
+                        <div><label for="subject-char3-name">인물 3 명칭 (선택):</label><input type="text" id="subject-char3-name" class="input-field" placeholder="예: 아이"></div>
+                        <div><label for="subject-char4-name">인물 4 명칭 (선택):</label><input type="text" id="subject-char4-name" class="input-field"></div>
+                    </div>
+                    <div class="md:col-span-2" data-field="subject-description">
+                        <label for="subject-description-input">Description (설명):</label>
+                        <p class="description">영상에 등장하는 인물, 사물 등 주요 대상과 상황을 설명합니다. (위 명칭 포함)</p>
+                        <textarea id="subject-description-input" class="input-field" placeholder="예: [할머니]와 [남자]가 공원에서 나란히 조깅하며..."></textarea>
+                    </div>
+                    <div data-field="subject-wardrobe">
+                        <label for="subject-wardrobe-select">Wardrobe (의상):</label>
+                        <p class="description">대상의 의상을 지정합니다. (인물별 지정 가능)</p>
+                        <select id="subject-wardrobe-select" class="input-field"></select>
+                        <input type="text" id="subject-wardrobe-input" class="input-field hidden mt-1" placeholder="직접 입력... 예: 할머니는 파란 운동복, 남자는 빨간 티셔츠">
+                    </div>
+                    <div data-field="subject-props">
+                        <label for="subject-props-input">Props (소품):</label>
+                        <p class="description">대상이 사용하거나 주변에 있는 소품을 지정합니다.</p>
+                        <input type="text" id="subject-props-input" class="input-field" placeholder="예: 물병, 스마트워치">
+                    </div>
+                    <div data-field="subject-background_elements">
+                        <label for="subject-background_elements-input">Background Elements (배경 요소):</label>
+                        <p class="description">배경에 포함될 부가적인 요소들을 지정합니다.</p>
+                        <input type="text" id="subject-background_elements-input" class="input-field" placeholder="예: 벤치, 공원 시설물, 지나가는 행인들">
+                    </div>
+                </div>
+            </details>
+
+            <!-- Scene (장면 정보) -->
+            <details open>
+                <summary class="text-xl mb-2 flex justify-between items-center"><span><span class="arrow">▶</span> Scene (장면 정보)</span></summary>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div data-field="scene-location">
+                        <label for="scene-location-select">Location (장소):</label>
+                        <p class="description">영상이 촬영되는 구체적인 장소를 설정합니다.</p>
+                        <select id="scene-location-select" class="input-field"></select>
+                        <input type="text" id="scene-location-input" class="input-field hidden mt-1" placeholder="직접 입력...">
+                    </div>
+                    <div data-field="scene-time_of_day">
+                        <label for="scene-time_of_day-select">Time of Day (시간대):</label>
+                        <p class="description">장면의 시간적 배경을 설정합니다 (낮, 밤, 해질녘 등).</p>
+                        <select id="scene-time_of_day-select" class="input-field"></select>
+                        <input type="text" id="scene-time_of_day-input" class="input-field hidden mt-1" placeholder="직접 입력...">
+                    </div>
+                    <div class="md:col-span-2" data-field="scene-environment">
+                        <label for="scene-environment-input">Environment (환경 분위기):</label>
+                        <p class="description">장소의 전반적인 분위기나 상태를 묘사합니다.</p>
+                        <textarea id="scene-environment-input" class="input-field" placeholder="예: 깨끗하고 활기찬 공원, 푸른 녹지와 간간히 지나가는 사람들"></textarea>
+                    </div>
+                </div>
+            </details>
+
+            <!-- Visual Details (시각 디테일) -->
+            <details>
+                <summary class="text-xl mb-2 flex justify-between items-center"><span><span class="arrow">▶</span> Visual Details (시각 디테일)</span></summary>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div data-field="visual-action">
+                        <label for="visual-action-input">Action (행동 묘사):</label>
+                        <p class="description">대상의 구체적인 행동이나 움직임을 상세히 설명합니다.</p>
+                        <textarea id="visual-action-input" class="input-field" placeholder="예: 자연스럽게 조깅하며 정면 카메라와 대화한다."></textarea>
+                    </div>
+                    <div data-field="visual-special_effects">
+                        <label for="visual-special_effects-select">Special Effects (특수 효과):</label>
+                        <p class="description">적용할 시각적 특수 효과를 지정합니다 (없으면 '없음').</p>
+                        <select id="visual-special_effects-select" class="input-field"></select>
+                        <input type="text" id="visual-special_effects-input" class="input-field hidden mt-1" value="none">
+                    </div>
+                    <div data-field="visual-hair_clothing_motion">
+                        <label for="visual-hair_clothing_motion-select">Hair/Clothing Motion (머리카락/옷 움직임):</label>
+                        <p class="description">움직임에 따른 머리카락이나 옷의 자연스러운 흔들림 정도를 설정합니다.</p>
+                        <select id="visual-hair_clothing_motion-select" class="input-field"></select>
+                        <input type="text" id="visual-hair_clothing_motion-input" class="input-field hidden mt-1" placeholder="직접 입력... 예: 조깅에 맞는 가벼운 움직임">
+                    </div>
+                </div>
+            </details>
+            
+            <!-- Cinematography (촬영 기술) -->
+            <details>
+                <summary class="text-xl mb-2 flex justify-between items-center"><span><span class="arrow">▶</span> Cinematography (촬영 기술)</span></summary>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div data-field="cine-lighting">
+                        <label for="cine-lighting-select">Lighting (조명):</label>
+                        <p class="description">장면의 조명 스타일과 조건을 설정합니다.</p>
+                        <select id="cine-lighting-select" class="input-field"></select>
+                        <textarea id="cine-lighting-input" class="input-field hidden mt-1" placeholder="직접 입력..."></textarea>
+                    </div>
+                    <div data-field="cine-color_palette">
+                        <label for="cine-color_palette-select">Color Palette (색상 팔레트):</label>
+                        <p class="description">영상 전체의 주요 색상 톤을 지정합니다.</p>
+                        <select id="cine-color_palette-select" class="input-field"></select>
+                        <input type="text" id="cine-color_palette-input" class="input-field hidden mt-1" placeholder="직접 입력...">
+                    </div>
+                    <div data-field="cine-tone">
+                        <label for="cine-tone-select">Tone (분위기):</label>
+                        <p class="description">영상의 전반적인 분위기나 느낌을 설정합니다.</p>
+                        <select id="cine-tone-select" class="input-field"></select>
+                        <input type="text" id="cine-tone-input" class="input-field hidden mt-1" placeholder="직접 입력...">
+                    </div>
+                    <div class="md:col-span-2 space-y-4 border rounded p-4 dark:border-gray-600">
+                        <h4 class="font-medium">Audio Guidelines (오디오 가이드라인)</h4>
+                        <div data-field="audio-music_style">
+                            <label for="audio-music_style-select">Music Style (음악 스타일):</label>
+                            <select id="audio-music_style-select" class="input-field"></select>
+                            <input type="text" id="audio-music_style-input" class="input-field hidden mt-1" placeholder="직접 입력...">
+                        </div>
+                        <div data-field="audio-mix_priority">
+                            <label for="audio-mix_priority-input">Mix Priority (믹스 우선순위):</label>
+                            <input type="text" id="audio-mix_priority-input" class="input-field" value="dialogue on top, background restrained">
+                        </div>
+                        <div data-field="audio-lufs_target">
+                            <label for="audio-lufs_target-input">LUFS Target (음량 목표):</label>
+                            <input type="text" id="audio-lufs_target-input" class="input-field" value="-16 to -14 LUFS (dialogue)">
+                        </div>
+                        <div data-field="audio-notes">
+                            <label for="audio-notes-input">Notes (참고 사항):</label>
+                            <input type="text" id="audio-notes-input" class="input-field" placeholder="예: 과한 컴프레션 피하기">
+                        </div>
+                    </div>
+                </div>
+            </details>
+            
+            <!-- Timeline (타임라인) -->
+            <details open>
+                <summary class="text-xl mb-2 flex justify-between items-center"><span><span class="arrow">▶</span> Timeline (타임라인)</span></summary>
+                <div id="timeline-container" class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <!-- 템플릿: 타임라인 세그먼트 -->
+                    <template id="timeline-template">
+                        <div class="timeline-segment">
+                            <button type="button" class="remove-btn btn btn-danger text-xs px-1 py-0.5 rounded">X</button>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><label>Time (t):</label><input type="text" data-key="t" placeholder="예: 0-3s" class="input-field"></div>
+                                <div class="md:col-span-2">
+                                    <label>Description:</label>
+                                    <p class="description text-xs">장면 묘사 (팁: 누가 행동/말하는지 명시)</p>
+                                    <textarea data-key="description" placeholder="예: 정면 투샷 유지. 남자가 대사를 말한다." class="input-field"></textarea>
+                                </div>
+                                <div class="space-y-2 border rounded p-3 dark:border-gray-600">
+                                    <h5 class="font-medium text-sm">Audio</h5>
+                                    <div><label class="text-xs">Music:</label><input type="text" data-key="audio.music" placeholder="예: 경쾌한 연주곡..." class="input-field input-sm"></div>
+                                    <div><label class="text-xs">Ambient:</label><input type="text" data-key="audio.ambient" placeholder="예: 새소리, 바람..." class="input-field input-sm"></div>
+                                    <div><label class="text-xs">Sound Effects:</label><input type="text" data-key="audio.sound_effects" placeholder="예: 발자국 소리..." class="input-field input-sm"></div>
+                                    <div><label class="text-xs">Mix Level:</label><input type="text" data-key="audio.mix_level" placeholder="예: 대화 우선..." class="input-field input-sm"></div>
+                                </div>
+                                <div class="space-y-2 border rounded p-3 dark:border-gray-600">
+                                    <h5 class="font-medium text-sm">Dialogue</h5>
+                                    <div><label class="text-xs">Character (화자):</label><select data-key="dialogue.character" class="input-field input-sm timeline-character-select"><option value="">선택...</option></select></div>
+                                    <div><label class="text-xs">Line (대사):</label><input type="text" data-key="dialogue.line" placeholder="예: 할머니 안 힘들어요?" class="input-field input-sm"></div>
+                                    <div><label class="text-xs">Subtitles (자막 유무):</label><select data-key="dialogue.subtitles" class="input-field input-sm"><option value="false" selected>아니오</option><option value="true">예</option></select></div>
+                                    <div><label class="text-xs">Guideline (가이드라인):</label><input type="text" data-key="dialogue.guideline" value="한국말로 말한다" class="input-field input-sm"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                    <!-- 타임라인 세그먼트가 여기에 추가됩니다 -->
+                </div>
+                <button type="button" id="add-timeline-btn" class="mt-2 btn btn-secondary py-1 px-3 rounded text-sm">+ 타임라인 추가</button>
+            </details>
+            
+            <!-- Rules (규칙) -->
+            <details>
+                <summary class="text-xl mb-2 flex justify-between items-center"><span><span class="arrow">▶</span> Rules (규칙)</span></summary>
+                <div id="rules-container" class="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <label class="flex items-center space-x-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                        <input type="checkbox" id="rule-match-dialogue" class="rounded text-indigo-600 focus:ring-indigo-500">
+                        <span>대사는 반드시 지정된 캐릭터와 일치해야 함</span>
+                    </label>
+                    <!-- 템플릿: 규칙 항목 -->
+                    <template id="rule-template">
+                        <div class="rule-item flex items-center mb-2">
+                            <input type="text" data-key="rule" class="input-field flex-grow mr-2" placeholder="예: 모든 대화는 조깅을 멈추지 않고 진행">
+                            <button type="button" class="remove-btn btn btn-danger text-xs px-2 py-1 rounded" style="position: relative; top: 0; right: 0;">삭제</button>
+                        </div>
+                    </template>
+                    <!-- 규칙 항목이 여기에 추가됩니다 -->
+                </div>
+                <button type="button" id="add-rule-btn" class="mt-2 btn btn-secondary py-1 px-3 rounded text-sm">+ 규칙 추가</button>
+
+            </details>
+            
+            <!-- Negatives (제외 항목) -->
+            <details>
+                <summary class="text-xl mb-2 flex justify-between items-center"><span><span class="arrow">▶</span> Negatives (제외 항목)</span></summary>
+                <div id="negatives-container" class="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <!-- 템플릿: 제외 항목 -->
+                    <template id="negative-template">
+                        <div class="negative-item flex items-center mb-2">
+                            <input type="text" data-key="negative" class="input-field flex-grow mr-2" placeholder="예: 과장된 연기나 숨소리">
+                            <button type="button" class="remove-btn btn btn-danger text-xs px-2 py-1 rounded" style="position: relative; top: 0; right: 0;">삭제</button>
+                        </div>
+                    </template>
+                    <!-- 제외 항목이 여기에 추가됩니다 -->
+                </div>
+                <button type="button" id="add-negative-btn" class="mt-2 btn btn-secondary py-1 px-3 rounded text-sm">+ 제외 항목 추가</button>
+            </details>
+            
+            <!-- Optional (선택 사항) -->
+            <details>
+                <summary class="text-xl mb-2 flex justify-between items-center"><span><span class="arrow">▶</span> Optional (선택 사항)</span></summary>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    <div>
+                        <label for="optional-safety">Safety Notes (안전 참고):</label>
+                        <p class="description">촬영 시 안전 관련 유의사항을 기입합니다.</p>
+                        <textarea id="optional-safety" class="input-field" placeholder="예: 뒤로 걷는 촬영자를 위한 보조 인원 배치"></textarea>
+                    </div>
+                    <div>
+                        <label for="optional-contingency">Contingency Notes (비상 계획):</label>
+                        <p class="description">예상치 못한 상황 발생 시 대처 방안을 기입합니다.</p>
+                        <textarea id="optional-contingency" class="input-field" placeholder="예: 햇빛이 너무 강하면 그늘로 이동..."></textarea>
+                    </div>
+                </div>
+            </details>
+
+            <!-- JSON 생성 버튼 -->
+            <button type="button" id="generate-json-btn" class="w-full btn btn-primary font-bold py-3 px-4 rounded-lg text-lg flex items-center justify-center space-x-2">
+                📄
+                <span>JSON 프롬프트 생성하기</span>
+            </button>
+
+            <!-- 결과 표시 영역 -->
+            <div id="result-container" class="hidden space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-semibold">🎉 JSON 프롬프트</h2>
+                    <button type="button" id="copy-json-btn" class="btn btn-secondary py-2 px-4 rounded-lg">복사하기</button>
+                </div>
+                <pre class="w-full p-4 bg-gray-100 dark:bg-gray-900 rounded-lg whitespace-pre-wrap text-sm break-words border dark:border-gray-600"><code id="result-json"></code></pre>
+            </div>
+            
+            <!-- 오류 메시지 표시 영역 -->
+            <div id="error-message" class="error-message hidden mt-4"></div>
+
+        </form>
+    </div>
+
+    <!-- Custom Alert/Confirm Modal -->
+    <div id="modal" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md card">
+            <h3 id="modal-title" class="text-lg font-bold mb-4">알림</h3>
+            <p id="modal-message" class="text-gray-700 dark:text-gray-300 mb-6"></p>
+            <div id="modal-actions" class="flex justify-end space-x-3">
+                <button id="modal-confirm-btn" class="btn btn-primary">확인</button>
+                <button id="modal-cancel-btn" class="btn btn-secondary">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const D = document;
+            const form = D.getElementById('prompt-form');
+            const resultContainer = D.getElementById('result-container');
+            const resultJson = D.getElementById('result-json');
+            const copyJsonBtn = D.getElementById('copy-json-btn');
+            const errorMessage = D.getElementById('error-message');
+            const STORAGE_PREFIX = 'jsonPromptBuilder_';
+
+            const characterNameInputs = [
+                D.getElementById('subject-char1-name'),
+                D.getElementById('subject-char2-name'),
+                D.getElementById('subject-char3-name'),
+                D.getElementById('subject-char4-name')
+            ];
+
+            const examples = {
+                'shot-composition': ['싱글 프레임 - 전면 투샷', '클로즈업', '와이드 샷', '미디엄 샷', '오버더숄더 샷', 'POV (1인칭 시점)'],
+                'shot-lens': ['24-35mm 전면 투샷 (핸드헬드)', '50mm 고정샷', '85mm 클로즈업', '드론 광각샷', '어안 렌즈 왜곡', '매크로 렌즈 접사'],
+                'shot-frame_rate': ['24fps (영화 느낌)', '30fps (표준)', '60fps (부드러운 움직임)', '120fps (슬로우 모션용)'],
+                'shot-camera_movement': ['핸드헬드; 뒤로 걷기', '고정 삼각대', '달리 줌 (Dolly Zoom)', '스테디캠 트래킹', '크레인 샷 (상승/하강)', '360도 회전'],
+                'subject-wardrobe': ['가벼운 운동복', '정장', '캐주얼 의상 (청바지, 티셔츠)', '전통 한복', '판타지 갑옷', '미래지향적 우주복'],
+                'scene-location': ['도시 공원 조깅로', '번화한 도심 거리 (밤)', '조용한 시골 마을', '해변가 노을', '눈 덮인 산 정상', '우주선 내부'],
+                'scene-time_of_day': ['정오, 부드러운 자연광', '해질녘, 황금빛', '밤, 네온사인', '새벽, 푸른 빛', '흐린 날 오후', '폭풍우 치는 밤'],
+                'visual-special_effects': ['없음', '슬로우 모션', '렌즈 플레어', '색 보정 강조 (채도 높임)', '안개 효과', '글리치 (Glitch) 효과', '타임 랩스'],
+                'visual-hair_clothing_motion': ['움직임 없음', '조깅에 맞는 가벼운 움직임', '바람에 강하게 휘날림', '물 속에서의 움직임'],
+                'cine-lighting': ['부드러운 자연광 (확산광)', '강한 콘트라스트 조명 (하드 라이트)', '스튜디오 3점 조명', '실루엣 역광', '네온 조명', '촛불 조명'],
+                'cine-color_palette': ['자연스러운 녹색/하늘색', '따뜻한 오렌지/브라운 톤', '차가운 블루/그레이 톤', '강렬한 원색 대비', '파스텔 톤', '모노크롬 (흑백)'],
+                'cine-tone': ['따뜻하고 코믹함', '진지하고 극적임', '신비롭고 몽환적', '차분하고 다큐멘터리', '긴장감 넘치는 스릴러', '밝고 희망참'],
+                'audio-music_style': ['경쾌한 업템포 연주곡', '잔잔한 피아노 배경음', '긴장감 있는 오케스트라', 'EDM 비트', '로파이 힙합', '클래식 음악']
+            };
+
+
+            // --- Custom Modal Logic ---
+            const modal = D.getElementById('modal');
+            const modalTitle = D.getElementById('modal-title');
+            const modalMessage = D.getElementById('modal-message');
+            const modalConfirmBtn = D.getElementById('modal-confirm-btn');
+            const modalCancelBtn = D.getElementById('modal-cancel-btn');
+            let confirmCallback = null;
+
+            function showModal(title, message, type = 'alert', callback = null) {
+                if (!modal) return;
+                modalTitle.textContent = title;
+                modalMessage.textContent = message;
+                confirmCallback = callback;
+                
+                if (type === 'confirm') {
+                    modalConfirmBtn.textContent = '확인';
+                    modalCancelBtn.classList.remove('hidden');
+                } else { // 'alert'
+                    modalConfirmBtn.textContent = '확인';
+                    modalCancelBtn.classList.add('hidden');
+                }
+                modal.classList.remove('hidden');
+            }
+
+            function hideModal() {
+                if (!modal) return;
+                modal.classList.add('hidden');
+                confirmCallback = null;
+            }
+
+            modalConfirmBtn?.addEventListener('click', () => {
+                if (confirmCallback) {
+                    confirmCallback(true); // User confirmed
+                }
+                hideModal();
+            });
+
+            modalCancelBtn?.addEventListener('click', () => {
+                if (confirmCallback) {
+                    confirmCallback(false); // User cancelled
+                }
+                hideModal();
+            });
+            // --- End Custom Modal Logic ---
+
+
+            // --- 함수 정의 ---
+
+            function createSelectWithOptions(fieldId, options) {
+                const select = D.getElementById(`${fieldId}-select`);
+                if (!select) return;
+                select.innerHTML = ''; 
+
+                const defaultOption = D.createElement('option');
+                defaultOption.value = ""; defaultOption.textContent = "선택 안 함";
+                select.appendChild(defaultOption);
+
+                if (options && Array.isArray(options)) {
+                    options.forEach(opt => {
+                        if (opt === null || opt === undefined) return; 
+                        const optionEl = D.createElement('option');
+                        optionEl.value = opt; optionEl.textContent = opt;
+                        select.appendChild(optionEl);
+                    });
+                }
+
+                const directInputOpt = D.createElement('option');
+                directInputOpt.value = 'direct_input'; directInputOpt.textContent = '직접 입력';
+                select.appendChild(directInputOpt);
+
+                const input = D.getElementById(`${fieldId}-input`);
+                if (input) {
+                    const listenerKey = `__${fieldId}_listener`;
+                    if (!select[listenerKey]) { 
+                        const handler = (event) => handleSelectChange(event, fieldId);
+                        select.addEventListener('change', handler);
+                        select[listenerKey] = handler; 
+                    }
+                    input.classList.toggle('hidden', select.value !== 'direct_input'); 
+                } else if (select.value === 'direct_input') {
+                    select.value = ""; 
+                }
+            }
+            
+            function handleSelectChange(event, fieldId) {
+                 const select = event.target;
+                 const input = D.getElementById(`${fieldId}-input`);
+                 if (input) {
+                     input.classList.toggle('hidden', select.value !== 'direct_input');
+                     if (select.value === 'direct_input') input.focus();
+                 }
+            }
+
+            // ⭐️⭐️⭐️ [버그 수정] 
+            // '불러오기' 시 타임라인의 화자 이름이 'Subject' 목록에 없어도
+            // 드롭다운에서 사라지지 않도록 수정
+            function updateTimelineCharacterOptions() {
+                const characterNames = characterNameInputs
+                    .map(input => input ? input.value.trim() : '') 
+                    .filter(name => name); 
+                
+                D.querySelectorAll('.timeline-character-select').forEach(select => {
+                    if (!select) return; 
+                    const currentValue = select.value; // (예: "흑인 남자")
+                    select.innerHTML = '<option value="">선택...</option>';
+                    
+                    // 현재 'Subject' 목록의 이름들로 Set을 만듭니다.
+                    const allNames = new Set(characterNames);
+                    
+                    // ⭐️ [FIX] 만약 현재 드롭다운의 값(currentValue)이
+                    // 'Subject' 목록(allNames)에 없다면, (예: 불러오기 직후)
+                    // 이 값을 옵션 목록(allNames)에 강제로 추가합니다.
+                    if (currentValue && !allNames.has(currentValue)) {
+                        allNames.add(currentValue);
+                    }
+
+                    // 이제 'Subject' 목록 + 불러온 값을 포함한 전체 목록으로 옵션을 만듭니다.
+                    allNames.forEach(name => {
+                        const option = D.createElement('option');
+                        option.value = name; option.textContent = name;
+                        select.appendChild(option);
+                    });
+
+                    // ⭐️ 이제 allNames에 currentValue가 반드시 포함되어 있으므로,
+                    // 값을 안전하게 복원할 수 있습니다.
+                    if (currentValue) {
+                        select.value = currentValue;
+                    }
+                });
+            }
+            characterNameInputs.forEach(input => input?.addEventListener('input', updateTimelineCharacterOptions));
+
+
+            function addTimelineSegment(segmentData = null) {
+                const template = D.getElementById('timeline-template');
+                if (!template || !(template instanceof HTMLTemplateElement) || !template.content) return;
+                try {
+                    const clone = D.importNode(template.content, true);
+                    
+                    if (segmentData && typeof segmentData === 'object') {
+                        clone.querySelectorAll('[data-key]').forEach(input => {
+                            const keys = input.dataset.key.split('.');
+                            let currentData = segmentData;
+                            let valueToSet = '';
+                            for (let i = 0; i < keys.length; i++) {
+                                const key = keys[i];
+                                if (currentData && typeof currentData === 'object' && currentData.hasOwnProperty(key)) {
+                                    if (i === keys.length - 1) {
+                                        valueToSet = (typeof currentData[key] === 'boolean') ? String(currentData[key]) : currentData[key] || '';
+                                    } else {
+                                        currentData = currentData[key];
+                                    }
+                                } else {
+                                    currentData = undefined; break; 
+                                }
+                            }
+                            input.value = valueToSet;
+                        });
+                    }
+                    
+                    const timelineContainer = D.getElementById('timeline-container');
+                    if (!timelineContainer) return;
+
+                    const childCount = timelineContainer.children.length;
+                    timelineContainer.appendChild(clone); 
+                    
+                    const addedSegment = timelineContainer.children[childCount]; 
+                    
+                    if (addedSegment) {
+                        const removeBtn = addedSegment.querySelector('.remove-btn');
+                        if(removeBtn) removeBtn.addEventListener('click', () => addedSegment.remove());
+                    }
+                    // ⭐️⭐️⭐️ [중요]
+                    // 타임라인 항목이 DOM에 추가되고 *난 뒤* 화자 목록을 업데이트합니다.
+                    // 이렇게 해야 위에서 수정한 updateTimelineCharacterOptions가
+                    // 방금 설정된 select.value (예: "흑인 남자")를 읽을 수 있습니다.
+                    updateTimelineCharacterOptions(); 
+                } catch (e) { console.error("Error adding timeline segment:", e); }
+            }
+            
+            function addListItem(containerId, templateId, itemText = '') {
+                const template = D.getElementById(templateId); 
+                if (!template || !(template instanceof HTMLTemplateElement) || !template.content) return;
+                try {
+                    const clone = D.importNode(template.content, true); 
+                    
+                    const input = clone.querySelector('input[data-key]'); 
+                    if (input && itemText) input.value = itemText;
+                    
+                    const container = D.getElementById(containerId); 
+                    if (!container) return;
+
+                    const childCount = container.children.length;
+                    container.appendChild(clone); 
+                    
+                    const newItemElement = container.children[childCount];
+                    
+                    if (newItemElement) {
+                        const removeBtn = newItemElement.querySelector('.remove-btn');
+                        if (removeBtn) newItemElement.querySelector('.remove-btn').addEventListener('click', () => newItemElement.remove());
+                    }
+                } catch (e) { console.error(`Error adding list item to ${containerId}:`, e); }
+            }
+            
+            D.getElementById('add-timeline-btn')?.addEventListener('click', () => addTimelineSegment());
+            D.getElementById('add-rule-btn')?.addEventListener('click', () => addListItem('rules-container', 'rule-template'));
+            D.getElementById('add-negative-btn')?.addEventListener('click', () => addListItem('negatives-container', 'negative-template'));
+
+            
+            function getFieldValue(fieldIdBase) {
+                const select = D.getElementById(`${fieldIdBase}-select`);
+                const input = D.getElementById(`${fieldIdBase}-input`); 
+
+                if (select) { 
+                    if (select.value === 'direct_input' && input) {
+                        return input.value.trim(); 
+                    }
+                    return select.value; 
+                }
+                
+                if (input) { 
+                    return input.value.trim();
+                }
+
+                const standaloneEl = D.getElementById(fieldIdBase);
+                if (standaloneEl) {
+                    return standaloneEl.value.trim();
+                }
+                return ""; 
+            }
+
+            D.getElementById('generate-json-btn')?.addEventListener('click', () => {
+                try {
+                    errorMessage.classList.add('hidden');
+                    resultContainer.classList.add('hidden');
+
+                    const prompt = {
+                        shot: {
+                            composition: getFieldValue('shot-composition'),
+                            lens: getFieldValue('shot-lens'),
+                            frame_rate: getFieldValue('shot-frame_rate'),
+                            camera_movement: getFieldValue('shot-camera_movement')
+                        },
+                        subject: {
+                            characters: [
+                                { name: D.getElementById('subject-char1-name').value.trim() },
+                                { name: D.getElementById('subject-char2-name').value.trim() },
+                                { name: D.getElementById('subject-char3-name').value.trim() },
+                                { name: D.getElementById('subject-char4-name').value.trim() }
+                            ].filter(c => c.name), 
+                            description: getFieldValue('subject-description-input'), 
+                            wardrobe: getFieldValue('subject-wardrobe'),
+                            props: getFieldValue('subject-props-input'), 
+                            background_elements: getFieldValue('subject-background_elements-input') 
+                        },
+                        scene: {
+                            location: getFieldValue('scene-location'),
+                            time_of_day: getFieldValue('scene-time_of_day'),
+                            environment: getFieldValue('scene-environment-input') 
+                        },
+                        visual_details: {
+                            action: getFieldValue('visual-action-input'), 
+                            special_effects: getFieldValue('visual-special_effects'),
+                            hair_clothing_motion: getFieldValue('visual-hair_clothing_motion')
+                        },
+                        cinematography: {
+                            lighting: getFieldValue('cine-lighting'),
+                            color_palette: getFieldValue('cine-color_palette'),
+                            tone: getFieldValue('cine-tone'),
+                            audio_guidelines: {
+                                music_style: getFieldValue('audio-music_style'),
+                                mix_priority: getFieldValue('audio-mix_priority-input'), 
+                                lufs_target: getFieldValue('audio-lufs_target-input'), 
+                                notes: getFieldValue('audio-notes-input') 
+                            }
+                        },
+                        timeline: [],
+                        rules: [],
+                        negatives: [],
+                        optional: {
+                            safety_notes: getFieldValue('optional-safety'), 
+                            contingency_notes: getFieldValue('optional-contingency') 
+                        }
+                    };
+
+                    // 타임라인 채우기
+                    D.querySelectorAll('#timeline-container .timeline-segment').forEach(segment => {
+                        const timelineData = {};
+                        segment.querySelectorAll('[data-key]').forEach(input => {
+                            const keys = input.dataset.key.split('.');
+                            let current = timelineData;
+                            keys.forEach((key, index) => {
+                                if (index === keys.length - 1) {
+                                    let value = input.value.trim();
+                                    if (input.tagName === 'SELECT') {
+                                        if (value === 'true') value = true;
+                                        else if (value === 'false') value = false;
+                                    }
+                                    // ⭐️⭐️⭐️ [수정]
+                                    // 값이 "" (예: '선택...')이 아닐 때만 키를 추가합니다.
+                                    // 또는, boolean false일 때는 추가합니다.
+                                    if(value || value === false) {
+                                        current[key] = value; 
+                                    }
+                                } else {
+                                    current[key] = current[key] || {};
+                                    current = current[key];
+                                }
+                            });
+                        });
+                        if (Object.keys(timelineData).length > 0 && timelineData.t) { 
+                            prompt.timeline.push(timelineData);
+                        }
+                    });
+
+                    // 규칙 채우기
+                    prompt.rules = Array.from(D.querySelectorAll('#rules-container input[data-key="rule"]'))
+                                      .map(input => input.value.trim())
+                                      .filter(Boolean);
+                    if (D.getElementById('rule-match-dialogue').checked) {
+                        prompt.rules.push("대사는 반드시 지정된 캐릭터와 일치해야 함");
+                    }
+
+                    // 제외 항목 채우기
+                    prompt.negatives = Array.from(D.querySelectorAll('#negatives-container input[data-key="negative"]'))
+                                         .map(input => input.value.trim())
+                                         .filter(Boolean);
+
+                    // 빈 객체나 배열 정리 (코드가 길어 생략, 이전과 동일)
+                    Object.keys(prompt).forEach(key => {
+                        const value = prompt[key];
+                        if (value === null || value === "") {
+                            delete prompt[key];
+                        } else if (Array.isArray(value) && value.length === 0) {
+                            delete prompt[key];
+                        } else if (typeof value === 'object' && !Array.isArray(value)) {
+                            Object.keys(value).forEach(subKey => {
+                                const subValue = value[subKey];
+                                if (subValue === "" || subValue === null || (Array.isArray(subValue) && subValue.length === 0)) {
+                                    delete value[subKey];
+                                }
+                                if (typeof subValue === 'object' && !Array.isArray(subValue) && subValue !== null && Object.keys(subValue).length === 0) {
+                                    delete value[subKey];
+                                }
+                            });
+                            if (Object.keys(value).length === 0) {
+                                delete prompt[key];
+                            }
+                        }
+                    });
+
+
+                    resultJson.textContent = JSON.stringify(prompt, null, 4);
+                    resultContainer.classList.remove('hidden');
+
+                } catch (err) {
+                    console.error("Error generating JSON:", err);
+                    errorMessage.textContent = `JSON 생성 중 오류 발생: ${err.message}`;
+                    errorMessage.classList.remove('hidden');
+                }
+            });
+            
+            copyJsonBtn?.addEventListener('click', () => {
+                if (!navigator.clipboard) {
+                    try {
+                        const textArea = D.createElement('textarea');
+                        textArea.value = resultJson.textContent;
+                        textArea.style.position = 'fixed'; textArea.style.opacity = '0';
+D.body.appendChild(textArea);
+                        textArea.select();
+                        D.execCommand('copy');
+                        D.body.removeChild(textArea);
+                        copyJsonBtn.textContent = '복사 완료!';
+                    } catch (err) {
+                        console.error('Fallback copy failed:', err);
+                        copyJsonBtn.textContent = '복사 실패';
+                    }
+                } else {
+                    navigator.clipboard.writeText(resultJson.textContent).then(() => {
+                        copyJsonBtn.textContent = '복사 완료!';
+                    }, (err) => {
+                        console.error('Async clipboard copy failed:', err);
+                        copyJsonBtn.textContent = '복사 실패';
+                    });
+                }
+                setTimeout(() => { copyJsonBtn.textContent = '복사하기'; }, 2000);
+            });
+
+            // --- 저장/불러오기/삭제 로직 ---
+            const saveNameInput = D.getElementById('save-name'); 
+            const saveBtn = D.getElementById('save-btn'); 
+            const loadSelect = D.getElementById('load-select'); 
+            const loadBtn = D.getElementById('load-btn'); 
+            const deleteBtn = D.getElementById('delete-btn');
+            
+            function populateLoadSelect() {
+                if (!loadSelect) return;
+                loadSelect.innerHTML = '<option value="">-- 선택 --</option>';
+                const keys = [];
+                try {
+                    if (localStorage && typeof localStorage.key === 'function') {
+                        for (let i = 0; i < localStorage.length; i++) {
+                            const key = localStorage.key(i);
+                            if (key && key.startsWith(STORAGE_PREFIX)) keys.push(key);
+                        }
+                    } else console.warn("localStorage is not available.");
+                } catch (e) { console.error("Could not access localStorage:", e); }
+                keys.sort().forEach(key => { 
+                    const name = key.substring(STORAGE_PREFIX.length); 
+                    const option = D.createElement('option'); 
+                    option.value = key; 
+                    option.textContent = name; 
+                    loadSelect.appendChild(option); 
+                });
+            }
+
+            function collectFormData() {
+                try {
+                    const data = {};
+                    // 정적 필드 수집
+                    form.querySelectorAll('input[type="text"][id]:not([data-key]), input[type="password"][id], textarea[id]:not([data-key]), select[id]:not([data-key]), input[type="checkbox"][id]:not([data-key])').forEach(el => {
+                        if (el.closest('.timeline-segment, .rule-item, .negative-item')) return; 
+                        const baseId = el.id.replace('-select', '').replace('-input', '');
+                        const selectEl = D.getElementById(`${baseId}-select`);
+                        const inputEl = D.getElementById(`${baseId}-input`);
+
+                        if (el.tagName === 'SELECT') {
+                            data[el.id] = el.value;
+                            if (el.value === 'direct_input' && inputEl) { 
+                                data[`${baseId}-input`] = inputEl.value.trim(); 
+                            }
+                        } else if (el.type === 'checkbox') {
+                            data[el.id] = el.checked;
+                        } else if (el.id.endsWith('-input') && selectEl && selectEl.value !== 'direct_input') {
+                            // '직접 입력' 아닐 때 input 값 저장 안 함
+                        } else if (el.id !== 'save-name') { 
+                            data[el.id] = el.value.trim();
+                        }
+                    });
+
+                    // 동적 필드 수집
+                    data.timelineSegments = Array.from(D.querySelectorAll('#timeline-container .timeline-segment')).map(segment => {
+                        const segmentData = {};
+                        segment.querySelectorAll('[data-key]').forEach(input => {
+                            let current = segmentData; const keys = input.dataset.key.split('.');
+                            keys.forEach((key, index) => {
+                                if (!current) return;
+                                if (index === keys.length - 1) { 
+                                    let value = input.value.trim(); 
+                                    if (input.tagName === 'SELECT' && (value === 'true' || value === 'false')) value = value === 'true'; 
+                                    current[key] = value; 
+                                }
+                                else { current[key] = current[key] || {}; current = current[key]; }
+                            });
+                        });
+                        return segmentData;
+                    });
+                    data.rules = Array.from(D.querySelectorAll('#rules-container input[data-key="rule"]')).map(input => input.value.trim()).filter(Boolean);
+                    data.negatives = Array.from(D.querySelectorAll('#negatives-container input[data-key="negative"]')).map(input => input.value.trim()).filter(Boolean);
+                    const ruleCheckbox = D.getElementById('rule-match-dialogue');
+                    data.ruleMatchDialogue = ruleCheckbox ? ruleCheckbox.checked : false;
+
+                    return data;
+                } catch (error) {
+                    console.error("Error collecting form data:", error);
+                    showModal("데이터 수집 오류", "데이터 수집 중 오류가 발생했습니다.", 'alert');
+                    return null; 
+                }
+            }
+
+            function applyFormData(data) {
+                if (!data || typeof data !== 'object') { console.error("Invalid data for applyFormData:", data); return; }
+
+                try {
+                    // 1. 모든 정적 필드 초기화 후 값 적용
+                    form.querySelectorAll('input[type="text"][id]:not([data-key]), input[type="password"][id], textarea[id]:not([data-key]), select[id]:not([data-key]), input[type="checkbox"][id]:not([data-key])').forEach(el => {
+                        if (!el.closest('.timeline-segment, .rule-item, .negative-item') && el.id !== 'save-name') {
+                            // 초기화
+                            if (el.type === 'checkbox') el.checked = false; else el.value = '';
+                            if (el.tagName === 'SELECT') { const inputEl = D.getElementById(el.id.replace('-select', '-input')); if (inputEl) inputEl.classList.add('hidden'); }
+                            
+                            // 값 적용
+                            if (data.hasOwnProperty(el.id)) {
+                                const value = data[el.id];
+                                if (el.tagName === 'SELECT') {
+                                    const baseId = el.id.replace('-select', '');
+                                    const inputEl = D.getElementById(`${baseId}-input`);
+                                    const directInputValue = data[`${baseId}-input`]; 
+                                    
+                                    const isDirectInput = value === 'direct_input' || (!Array.from(el.options).some(opt => opt.value === value) && value !== ""); 
+
+                                    if (isDirectInput) {
+                                        el.value = 'direct_input';
+                                        if (inputEl) { 
+                                            inputEl.value = directInputValue || (value !== 'direct_input' ? value : '') || ''; 
+                                            inputEl.classList.remove('hidden'); 
+                                        }
+                                    } else if (value !== undefined && value !== null) {
+                                        el.value = value;
+                                        if (inputEl) inputEl.classList.add('hidden');
+                                    } else { 
+                                         el.value = "";
+                                         if (inputEl) inputEl.classList.add('hidden');
+                                    }
+                                } else if (el.type === 'checkbox') {
+                                    el.checked = value || false;
+                                } else {
+                                    el.value = value || '';
+                                }
+                            }
+                        }
+                    });
+
+                    // 2. 동적 요소 재생성
+                    const timelineContainer = D.getElementById('timeline-container'); 
+                    timelineContainer.querySelectorAll('.timeline-segment').forEach(el => el.remove()); 
+                    if (data.timelineSegments && Array.isArray(data.timelineSegments) && data.timelineSegments.length > 0) { 
+                        data.timelineSegments.forEach(segmentData => addTimelineSegment(segmentData)); 
+                    } else { 
+                        addTimelineSegment(); 
+                    }
+
+                    const rulesContainer = D.getElementById('rules-container'); 
+                    rulesContainer.querySelectorAll('.rule-item').forEach(el => el.remove()); 
+                    if (data.rules && Array.isArray(data.rules)) { 
+                        data.rules.forEach(ruleText => {
+                            if (ruleText !== "대사는 반드시 지정된 캐릭터와 일치해야 함") {
+                                addListItem('rules-container', 'rule-template', ruleText);
+                            }
+                        });
+                    }
+
+                    const negativesContainer = D.getElementById('negatives-container'); 
+                    negativesContainer.querySelectorAll('.negative-item').forEach(el => el.remove()); 
+                    if (data.negatives && Array.isArray(data.negatives)) { 
+                        data.negatives.forEach(negText => addListItem('negatives-container', 'negative-template', negText)); 
+                    }
+
+                    const ruleCheckbox = D.getElementById('rule-match-dialogue'); 
+                    if(ruleCheckbox) ruleCheckbox.checked = data.ruleMatchDialogue || (data.rules && data.rules.includes("대사는 반드시 지정된 캐릭터와 일치해야 함")) || false;
+
+                    // ⭐️⭐️⭐️ [중요]
+                    // addTimelineSegment에서 이미 화자 목록을 갱신했지만,
+                    // 'Subject' 필드가 모두 적용된 *이후*에
+                    // 한 번 더 갱신하여 최신 상태를 보장합니다.
+                    updateTimelineCharacterOptions(); 
+
+                } catch (error) {
+                    console.error("Error applying form data:", error);
+                    showModal("데이터 적용 오류", "데이터 적용 중 오류가 발생했습니다.", 'alert');
+                }
+            }
+            
+            saveBtn?.addEventListener('click', () => {
+                const saveName = saveNameInput.value.trim();
+                if (!saveName) {
+                    showModal('입력 오류', '저장할 이름을 입력하세요.', 'alert');
+                    saveNameInput.focus();
+                    return;
+                }
+                try {
+                    const data = collectFormData();
+                    if (data) {
+                        localStorage.setItem(STORAGE_PREFIX + saveName, JSON.stringify(data));
+                        populateLoadSelect();
+                        loadSelect.value = STORAGE_PREFIX + saveName; 
+                        showModal('저장 완료', `'${saveName}'(으)로 저장되었습니다.`, 'alert');
+                    }
+                } catch (e) {
+                    console.error("Save failed:", e);
+                    showModal('저장 실패', `저장 중 오류가 발생했습니다: ${e.message}`, 'alert');
+                }
+            });
+
+            loadBtn?.addEventListener('click', () => {
+                const selectedKey = loadSelect.value;
+                if (!selectedKey) {
+                    showModal('선택 오류', '불러올 항목을 선택하세요.', 'alert');
+                    return;
+                }
+                try {
+                    const dataString = localStorage.getItem(selectedKey);
+                    if (dataString) {
+                        const data = JSON.parse(dataString);
+                        applyFormData(data);
+                        saveNameInput.value = selectedKey.substring(STORAGE_PREFIX.length); 
+                        showModal('불러오기 완료', `'${saveNameInput.value}'(을)를 불러왔습니다.`, 'alert');
+                        resultContainer.classList.add('hidden'); 
+                    }
+                } catch (e) {
+                    console.error("Load failed:", e);
+                    showModal('불러오기 실패', `불러오기 중 오류가 발생했습니다: ${e.message}`, 'alert');
+                }
+            });
+
+            deleteBtn?.addEventListener('click', () => {
+                const selectedKey = loadSelect.value;
+                if (!selectedKey) {
+                    showModal('선택 오류', '삭제할 항목을 선택하세요.', 'alert');
+                    return;
+                }
+                const saveName = selectedKey.substring(STORAGE_PREFIX.length);
+
+                showModal('삭제 확인', `'${saveName}'(을)를 정말 삭제하시겠습니까?`, 'confirm', (confirmed) => {
+                    if (confirmed) {
+                        try {
+                            localStorage.removeItem(selectedKey);
+                            populateLoadSelect();
+                            saveNameInput.value = ''; 
+                            showModal('삭제 완료', `'${saveName}'(이)가 삭제되었습니다.`, 'alert');
+                        } catch (e) {
+                             console.error("Delete failed:", e);
+                             showModal('삭제 실패', `삭제 중 오류가 발생했습니다: ${e.message}`, 'alert');
+                        }
+                    }
+                });
+            });
+
+            // --- 초기화 ---
+            function initialize() {
+                for (const fieldId in examples) { 
+                    createSelectWithOptions(fieldId, examples[fieldId]); 
+                }
+                addTimelineSegment(); 
+                updateTimelineCharacterOptions();
+                populateLoadSelect(); 
+                
+                if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.add('dark');
+                }
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+                    if (event.matches) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                });
+            }
+            
+            initialize(); // 앱 시작!
+
+        });
+    </script>
+</body>
+</html>
+
