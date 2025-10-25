@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎬 JSON 영상 프롬프트 빌더01</title>
+    <title>🎬 JSON 영상 프롬프트 빌더 </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        /* CSS 변수 설정 */
+        /* CSS는 이전과 동일합니다 */
         :root {
             --background-color: #ffffff;
             --text-color: #1f2937;
@@ -31,7 +31,6 @@
             --accent-color-hover: #4f46e5;
         }
         
-        /* 기본 스타일 */
         body { 
             font-family: 'Noto Sans KR', sans-serif; 
             background-color: var(--background-color); 
@@ -58,7 +57,7 @@
             box-shadow: 0 0 0 2px var(--accent-color-hover);
         }
         .dark .input-field, .dark select, .dark textarea { 
-            background-color: #2a2a3e; /* 어두운 입력 필드 배경 */
+            background-color: #2a2a3e; 
             border-color: #4b5563;
         }
         .btn { 
@@ -85,7 +84,7 @@
             color: var(--text-color-secondary); 
         } 
         .dark .btn-secondary { 
-            background-color: #374151; /* 어두운 2차 버튼 */
+            background-color: #374151; 
             border-color: #4b5563;
         } 
         .btn-secondary:hover:not(:disabled) { 
@@ -99,8 +98,6 @@
         .btn-danger:hover:not(:disabled) { 
             background-color: #dc2626; 
         }
-        
-        /* Details (접기/펴기) */
         details summary { 
             cursor: pointer; 
             font-weight: 600; 
@@ -113,12 +110,11 @@
             transition: transform 0.2s; 
             display: inline-block; 
             margin-right: 0.25rem;
-            transform: rotate(0deg); /* 기본 닫힌 상태 */
+            transform: rotate(0deg); 
         } 
         details[open] summary span.arrow { 
-            transform: rotate(90deg); /* 열린 상태 */
+            transform: rotate(90deg); 
         }
-        
         label { 
             margin-bottom: 0.25rem; 
             display: block; 
@@ -131,15 +127,13 @@
             margin-bottom: 0.5rem; 
             margin-top: -0.1rem;
         }
-        
-        /* 동적 아이템 (타임라인 등) */
         .timeline-segment, .rule-item, .negative-item { 
             border: 1px solid var(--border-color); 
             padding: 1rem; 
             margin-bottom: 1rem; 
             border-radius: 0.375rem; 
             position: relative;
-            background-color: rgba(0,0,0,0.02); /* 살짝 배경 구분 */
+            background-color: rgba(0,0,0,0.02); 
         }
         .dark .timeline-segment, .dark .rule-item, .dark .negative-item {
             background-color: rgba(255,255,255,0.03);
@@ -151,10 +145,7 @@
             padding: 0.1rem 0.3rem; 
             font-size: 0.7rem; 
         }
-        
         .hidden { display: none; }
-        
-        /* 에러 메시지 */
         .error-message { 
             color: var(--error-color); 
             background-color: rgba(255, 85, 85, 0.1); 
@@ -163,20 +154,16 @@
             border-radius: 6px; 
             text-align: center; 
         }
-        
-        /* 높이 일관성 */
         select.input-field, input.input-field { 
             height: 38px; 
         } 
-        .h-10 { height: 2.5rem; } /* 40px */
+        .h-10 { height: 2.5rem; } 
         .input-sm {
             height: 34px;
             font-size: 0.875rem;
             padding-top: 0.25rem;
             padding-bottom: 0.25rem;
         }
-
-        /* 다크모드 대응 (OS 설정) */
         @media (prefers-color-scheme: dark) {
             body {
                 background-color: var(--background-color);
@@ -202,14 +189,12 @@
     </style>
 </head>
 <body class="p-4 md:p-8">
-    <!-- 메인 컨텐츠 영역 -->
     <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 sm:p-8 space-y-6 card">
         <header class="text-center mb-6">
               <h1 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">🎬 JSON 영상 프롬프트 빌더</h1>
               <p class="text-gray-600 dark:text-gray-400 mt-2">상세한 영상 제작 계획을 JSON 형식으로 쉽게 구성하고 저장/불러오기 하세요.</p>
         </header>
 
-        <!-- 저장 / 불러오기 섹션 -->
         <section class="border-b dark:border-gray-700 pb-6 mb-6">
               <h2 class="text-lg font-semibold mb-3">저장 / 불러오기</h2>
               <div class="grid grid-cols-1 md:grid-cols-[1fr_auto_1.5fr] gap-4 items-end">
@@ -229,7 +214,6 @@
               </div>
         </section>
 
-        <!-- 프롬프트 폼 -->
         <form id="prompt-form" class="space-y-6">
             
             <!-- Shot (촬영 정보) -->
@@ -547,7 +531,6 @@
                 'audio-music_style': ['경쾌한 업템포 연주곡', '잔잔한 피아노 배경음', '긴장감 있는 오케스트라', 'EDM 비트', '로파이 힙합', '클래식 음악']
             };
 
-
             // --- Custom Modal Logic ---
             const modal = D.getElementById('modal');
             const modalTitle = D.getElementById('modal-title');
@@ -580,14 +563,14 @@
 
             modalConfirmBtn?.addEventListener('click', () => {
                 if (confirmCallback) {
-                    confirmCallback(true); // User confirmed
+                    confirmCallback(true); 
                 }
                 hideModal();
             });
 
             modalCancelBtn?.addEventListener('click', () => {
                 if (confirmCallback) {
-                    confirmCallback(false); // User cancelled
+                    confirmCallback(false); 
                 }
                 hideModal();
             });
@@ -595,7 +578,6 @@
 
 
             // --- 함수 정의 ---
-
             function createSelectWithOptions(fieldId, options) {
                 const select = D.getElementById(`${fieldId}-select`);
                 if (!select) return;
@@ -641,9 +623,7 @@
                  }
             }
 
-            // ⭐️⭐️⭐️ [버그 수정] 
-            // '불러오기' 시 타임라인의 화자 이름이 'Subject' 목록에 없어도
-            // 드롭다운에서 사라지지 않도록 수정
+            // [이전 버그 수정본] - '불러오기' 시 값이 사라지지 않도록 함
             function updateTimelineCharacterOptions() {
                 const characterNames = characterNameInputs
                     .map(input => input ? input.value.trim() : '') 
@@ -651,28 +631,21 @@
                 
                 D.querySelectorAll('.timeline-character-select').forEach(select => {
                     if (!select) return; 
-                    const currentValue = select.value; // (예: "흑인 남자")
-                    select.innerHTML = '<option value="">선택...</option>';
+                    const currentValue = select.value; 
+                    select.innerHTML = '<option value="">선택...</option>'; 
                     
-                    // 현재 'Subject' 목록의 이름들로 Set을 만듭니다.
                     const allNames = new Set(characterNames);
                     
-                    // ⭐️ [FIX] 만약 현재 드롭다운의 값(currentValue)이
-                    // 'Subject' 목록(allNames)에 없다면, (예: 불러오기 직후)
-                    // 이 값을 옵션 목록(allNames)에 강제로 추가합니다.
                     if (currentValue && !allNames.has(currentValue)) {
                         allNames.add(currentValue);
                     }
 
-                    // 이제 'Subject' 목록 + 불러온 값을 포함한 전체 목록으로 옵션을 만듭니다.
                     allNames.forEach(name => {
                         const option = D.createElement('option');
                         option.value = name; option.textContent = name;
                         select.appendChild(option);
                     });
 
-                    // ⭐️ 이제 allNames에 currentValue가 반드시 포함되어 있으므로,
-                    // 값을 안전하게 복원할 수 있습니다.
                     if (currentValue) {
                         select.value = currentValue;
                     }
@@ -720,10 +693,8 @@
                         const removeBtn = addedSegment.querySelector('.remove-btn');
                         if(removeBtn) removeBtn.addEventListener('click', () => addedSegment.remove());
                     }
-                    // ⭐️⭐️⭐️ [중요]
-                    // 타임라인 항목이 DOM에 추가되고 *난 뒤* 화자 목록을 업데이트합니다.
-                    // 이렇게 해야 위에서 수정한 updateTimelineCharacterOptions가
-                    // 방금 설정된 select.value (예: "흑인 남자")를 읽을 수 있습니다.
+                    
+                    // DOM에 추가된 후, 화자 목록 갱신 (이전 수정사항)
                     updateTimelineCharacterOptions(); 
                 } catch (e) { console.error("Error adding timeline segment:", e); }
             }
@@ -779,6 +750,7 @@
                 return ""; 
             }
 
+            // ⭐️⭐️⭐️ [버그 수정] ⭐️⭐️⭐️
             D.getElementById('generate-json-btn')?.addEventListener('click', () => {
                 try {
                     errorMessage.classList.add('hidden');
@@ -846,12 +818,13 @@
                                         if (value === 'true') value = true;
                                         else if (value === 'false') value = false;
                                     }
-                                    // ⭐️⭐️⭐️ [수정]
-                                    // 값이 "" (예: '선택...')이 아닐 때만 키를 추가합니다.
-                                    // 또는, boolean false일 때는 추가합니다.
-                                    if(value || value === false) {
-                                        current[key] = value; 
-                                    }
+                                    
+                                    // ⭐️⭐️⭐️ [버그 수정] ⭐️⭐️⭐️
+                                    // 'Generate' 로직을 'Save' 로직과 동일하게 변경
+                                    // (이전: if(value || value === false) { ... })
+                                    // 이제 빈 값("")도 일단 할당하고, 나중에 cleanup 로직이 처리합니다.
+                                    current[key] = value; 
+                                    
                                 } else {
                                     current[key] = current[key] || {};
                                     current = current[key];
@@ -876,16 +849,17 @@
                                          .map(input => input.value.trim())
                                          .filter(Boolean);
 
-                    // 빈 객체나 배열 정리 (코드가 길어 생략, 이전과 동일)
+                    // 빈 객체나 배열 정리 (이 로직이 이제 빈 "" character 필드를 제거해 줍니다)
                     Object.keys(prompt).forEach(key => {
                         const value = prompt[key];
                         if (value === null || value === "") {
                             delete prompt[key];
                         } else if (Array.isArray(value) && value.length === 0) {
                             delete prompt[key];
-                        } else if (typeof value === 'object' && !Array.isArray(value)) {
+                        } else if (typeof value === 'object' && !Array.isArray(value) && value !== null) { // null 체크 추가
                             Object.keys(value).forEach(subKey => {
                                 const subValue = value[subKey];
+                                // ⭐️⭐️⭐️ [수정] 빈 문자열("")을 여기서 제거합니다.
                                 if (subValue === "" || subValue === null || (Array.isArray(subValue) && subValue.length === 0)) {
                                     delete value[subKey];
                                 }
@@ -964,6 +938,7 @@ D.body.appendChild(textArea);
                 });
             }
 
+            // '저장' 로직 (타임라인의 빈 값("")도 저장함 - 정상)
             function collectFormData() {
                 try {
                     const data = {};
@@ -998,7 +973,7 @@ D.body.appendChild(textArea);
                                 if (index === keys.length - 1) { 
                                     let value = input.value.trim(); 
                                     if (input.tagName === 'SELECT' && (value === 'true' || value === 'false')) value = value === 'true'; 
-                                    current[key] = value; 
+                                    current[key] = value; // ⭐️ 빈 값("")도 저장
                                 }
                                 else { current[key] = current[key] || {}; current = current[key]; }
                             });
@@ -1089,10 +1064,7 @@ D.body.appendChild(textArea);
                     const ruleCheckbox = D.getElementById('rule-match-dialogue'); 
                     if(ruleCheckbox) ruleCheckbox.checked = data.ruleMatchDialogue || (data.rules && data.rules.includes("대사는 반드시 지정된 캐릭터와 일치해야 함")) || false;
 
-                    // ⭐️⭐️⭐️ [중요]
-                    // addTimelineSegment에서 이미 화자 목록을 갱신했지만,
-                    // 'Subject' 필드가 모두 적용된 *이후*에
-                    // 한 번 더 갱신하여 최신 상태를 보장합니다.
+                    // 'Subject' 필드가 모두 적용된 후, 최종적으로 화자 목록 갱신
                     updateTimelineCharacterOptions(); 
 
                 } catch (error) {
@@ -1193,4 +1165,3 @@ D.body.appendChild(textArea);
     </script>
 </body>
 </html>
-
