@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎬 JSON 영상 프롬프트 빌더 </title>
+    <!-- 
+      v02 (SimpleID) 변경점:
+      - 'Subject' 섹션을 '인물 ID'와 '인물 설명'으로 분리.
+      - 'Timeline'의 화자(character) 드롭다운에는 '인물 ID'만 표시.
+      - JSON 생성 시 'subject.characters'를 { name, description } 구조로 변경.
+      - JSON 생성 시 'timeline.dialogue.character'에는 'name' (짧은 ID)만 삽입.
+      - 이 방식은 사용자가 제공한 "작동하는 영어 JSON"의 로직과 100% 일치합니다.
+    -->
+    <title>🎬 JSON 영상 프롬프트 빌더02 (SimpleID)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
@@ -191,7 +199,7 @@
 <body class="p-4 md:p-8">
     <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 sm:p-8 space-y-6 card">
         <header class="text-center mb-6">
-              <h1 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">🎬 JSON 영상 프롬프트 빌더</h1>
+              <h1 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">🎬 JSON 영상 프롬프트 빌더 02 (SimpleID)</h1>
               <p class="text-gray-600 dark:text-gray-400 mt-2">상세한 영상 제작 계획을 JSON 형식으로 쉽게 구성하고 저장/불러오기 하세요.</p>
         </header>
 
@@ -247,36 +255,74 @@
                 </div>
             </details>
 
-            <!-- Subject (주요 대상) -->
+            <!-- ⭐️⭐️⭐️ [HTML 수정] Subject (주요 대상) 섹션 변경 ⭐️⭐️⭐️ -->
             <details open>
                 <summary class="text-xl mb-2 flex justify-between items-center"><span><span class="arrow">▶</span> Subject (주요 대상)</span></summary>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-gray-200 dark:border-gray-700 pt-4">
-                    <div class="md:col-span-2 grid grid-cols-2 gap-4">
-                        <div><label for="subject-char1-name">인물 1 명칭:</label><input type="text" id="subject-char1-name" class="input-field" placeholder="예: 할머니"></div>
-                        <div><label for="subject-char2-name">인물 2 명칭:</label><input type="text" id="subject-char2-name" class="input-field" placeholder="예: 남자"></div>
-                        <div><label for="subject-char3-name">인물 3 명칭 (선택):</label><input type="text" id="subject-char3-name" class="input-field" placeholder="예: 아이"></div>
-                        <div><label for="subject-char4-name">인물 4 명칭 (선택):</label><input type="text" id="subject-char4-name" class="input-field"></div>
+                <div class="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+                    
+                    <!-- 인물 1 & 2 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                        <div>
+                            <label for="subject-char1-id">인물 1 ID (짧은 이름):</label>
+                            <input type="text" id="subject-char1-id" class="input-field" placeholder="예: 할머니 (타임라인 화자로 사용됨)">
+                        </div>
+                        <div>
+                            <label for="subject-char1-desc">인물 1 설명:</label>
+                            <input type="text" id="subject-char1-desc" class="input-field" placeholder="예: 70대 한국 여성, 순자">
+                        </div>
+                        <div>
+                            <label for="subject-char2-id">인물 2 ID (짧은 이름):</label>
+                            <input type="text" id="subject-char2-id" class="input-field" placeholder="예: 남자 (타임라인 화자로 사용됨)">
+                        </div>
+                        <div>
+                            <label for="subject-char2-desc">인물 2 설명:</label>
+                            <input type="text" id="subject-char2-desc" class="input-field" placeholder="예: 30대 흑인 남성, 마크">
+                        </div>
                     </div>
-                    <div class="md:col-span-2" data-field="subject-description">
-                        <label for="subject-description-input">Description (설명):</label>
-                        <p class="description">영상에 등장하는 인물, 사물 등 주요 대상과 상황을 설명합니다. (위 명칭 포함)</p>
-                        <textarea id="subject-description-input" class="input-field" placeholder="예: [할머니]와 [남자]가 공원에서 나란히 조깅하며..."></textarea>
+
+                    <!-- 인물 3 & 4 (선택) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 border-t pt-4 border-dashed dark:border-gray-600">
+                        <div>
+                            <label for="subject-char3-id">인물 3 ID (선택):</label>
+                            <input type="text" id="subject-char3-id" class="input-field" placeholder="예: 아이">
+                        </div>
+                        <div>
+                            <label for="subject-char3-desc">인물 3 설명 (선택):</label>
+                            <input type="text" id="subject-char3-desc" class="input-field" placeholder="예: 5살 꼬마">
+                        </div>
+                        <div>
+                            <label for="subject-char4-id">인물 4 ID (선택):</label>
+                            <input type="text" id="subject-char4-id" class="input-field" placeholder="예: 행인1">
+                        </div>
+                        <div>
+                            <label for="subject-char4-desc">인물 4 설명 (선택):</label>
+                            <input type="text" id="subject-char4-desc" class="input-field" placeholder="예: 강아지와 산책하는 여성">
+                        </div>
                     </div>
-                    <div data-field="subject-wardrobe">
-                        <label for="subject-wardrobe-select">Wardrobe (의상):</label>
-                        <p class="description">대상의 의상을 지정합니다. (인물별 지정 가능)</p>
-                        <select id="subject-wardrobe-select" class="input-field"></select>
-                        <input type="text" id="subject-wardrobe-input" class="input-field hidden mt-1" placeholder="직접 입력... 예: 할머니는 파란 운동복, 남자는 빨간 티셔츠">
-                    </div>
-                    <div data-field="subject-props">
-                        <label for="subject-props-input">Props (소품):</label>
-                        <p class="description">대상이 사용하거나 주변에 있는 소품을 지정합니다.</p>
-                        <input type="text" id="subject-props-input" class="input-field" placeholder="예: 물병, 스마트워치">
-                    </div>
-                    <div data-field="subject-background_elements">
-                        <label for="subject-background_elements-input">Background Elements (배경 요소):</label>
-                        <p class="description">배경에 포함될 부가적인 요소들을 지정합니다.</p>
-                        <input type="text" id="subject-background_elements-input" class="input-field" placeholder="예: 벤치, 공원 시설물, 지나가는 행인들">
+
+                    <!-- 공통 설명 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t dark:border-gray-700">
+                        <div class="md:col-span-2" data-field="subject-description">
+                            <label for="subject-description-input">Description (공통 설명):</label>
+                            <p class="description">영상에 등장하는 인물, 사물 등 주요 대상과 상황을 설명합니다. (위 ID/설명과 함께 사용)</p>
+                            <textarea id="subject-description-input" class="input-field" placeholder="예: [할머니]와 [남자]가 공원에서 나란히 조깅하며..."></textarea>
+                        </div>
+                        <div data-field="subject-wardrobe">
+                            <label for="subject-wardrobe-select">Wardrobe (의상):</label>
+                            <p class="description">대상의 의상을 지정합니다. (인물별 지정 가능)</p>
+                            <select id="subject-wardrobe-select" class="input-field"></select>
+                            <input type="text" id="subject-wardrobe-input" class="input-field hidden mt-1" placeholder="직접 입력... 예: 할머니는 파란 운동복, 남자는 빨간 티셔츠">
+                        </div>
+                        <div data-field="subject-props">
+                            <label for="subject-props-input">Props (소품):</label>
+                            <p class="description">대상이 사용하거나 주변에 있는 소품을 지정합니다.</p>
+                            <input type="text" id="subject-props-input" class="input-field" placeholder="예: 물병, 스마트워치">
+                        </div>
+                        <div data-field="subject-background_elements">
+                            <label for="subject-background_elements-input">Background Elements (배경 요소):</label>
+                            <p class="description">배경에 포함될 부가적인 요소들을 지정합니다.</p>
+                            <input type="text" id="subject-background_elements-input" class="input-field" placeholder="예: 벤치, 공원 시설물, 지나가는 행인들">
+                        </div>
                     </div>
                 </div>
             </details>
@@ -398,6 +444,7 @@
                                 </div>
                                 <div class="space-y-2 border rounded p-3 dark:border-gray-600">
                                     <h5 class="font-medium text-sm">Dialogue</h5>
+                                    <!-- ⭐️⭐️⭐️ [HTML 수정] 'Character (화자)' 드롭다운은 변경 없음 (JS가 처리) ⭐️⭐️⭐️ -->
                                     <div><label class="text-xs">Character (화자):</label><select data-key="dialogue.character" class="input-field input-sm timeline-character-select"><option value="">선택...</option></select></div>
                                     <div><label class="text-xs">Line (대사):</label><input type="text" data-key="dialogue.line" placeholder="예: 할머니 안 힘들어요?" class="input-field input-sm"></div>
                                     <div><label class="text-xs">Subtitles (자막 유무):</label><select data-key="dialogue.subtitles" class="input-field input-sm"><option value="false" selected>아니오</option><option value="true">예</option></select></div>
@@ -417,7 +464,7 @@
                 <div id="rules-container" class="space-y-2 border-t border-gray-200 dark:border-gray-700 pt-4">
                     <label class="flex items-center space-x-2 p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
                         <input type="checkbox" id="rule-match-dialogue" class="rounded text-indigo-600 focus:ring-indigo-500">
-                        <span>대사는 반드시 지정된 캐릭터와 일치해야 함</span>
+                        <span>대사는 반드시 지정된 캐릭터(ID)와 일치해야 함</span>
                     </label>
                     <!-- 템플릿: 규칙 항목 -->
                     <template id="rule-template">
@@ -508,11 +555,12 @@
             const errorMessage = D.getElementById('error-message');
             const STORAGE_PREFIX = 'jsonPromptBuilder_';
 
+            // ⭐️⭐️⭐️ [JS 수정] characterNameInputs가 '*-id' 필드를 가리키도록 변경
             const characterNameInputs = [
-                D.getElementById('subject-char1-name'),
-                D.getElementById('subject-char2-name'),
-                D.getElementById('subject-char3-name'),
-                D.getElementById('subject-char4-name')
+                D.getElementById('subject-char1-id'),
+                D.getElementById('subject-char2-id'),
+                D.getElementById('subject-char3-id'),
+                D.getElementById('subject-char4-id')
             ];
 
             const examples = {
@@ -531,7 +579,7 @@
                 'audio-music_style': ['경쾌한 업템포 연주곡', '잔잔한 피아노 배경음', '긴장감 있는 오케스트라', 'EDM 비트', '로파이 힙합', '클래식 음악']
             };
 
-            // --- Custom Modal Logic ---
+            // --- Custom Modal Logic (변경 없음) ---
             const modal = D.getElementById('modal');
             const modalTitle = D.getElementById('modal-title');
             const modalMessage = D.getElementById('modal-message');
@@ -623,8 +671,9 @@
                  }
             }
 
-            // [이전 버그 수정본] - '불러오기' 시 값이 사라지지 않도록 함
+            // ⭐️⭐️⭐️ [JS 수정] updateTimelineCharacterOptions (로직 변경 없음, characterNameInputs가 ID필드를 바라봄)
             function updateTimelineCharacterOptions() {
+                // characterNameInputs가 이제 '*-id' 필드(짧은 이름)를 가리킵니다.
                 const characterNames = characterNameInputs
                     .map(input => input ? input.value.trim() : '') 
                     .filter(name => name); 
@@ -636,10 +685,12 @@
                     
                     const allNames = new Set(characterNames);
                     
+                    // '불러오기' 시 ID가 목록에 없어도 강제로 추가
                     if (currentValue && !allNames.has(currentValue)) {
                         allNames.add(currentValue);
                     }
 
+                    // 드롭다운에 짧은 ID(name)만 추가
                     allNames.forEach(name => {
                         const option = D.createElement('option');
                         option.value = name; option.textContent = name;
@@ -654,6 +705,7 @@
             characterNameInputs.forEach(input => input?.addEventListener('input', updateTimelineCharacterOptions));
 
 
+            // addTimelineSegment (로직 변경 없음)
             function addTimelineSegment(segmentData = null) {
                 const template = D.getElementById('timeline-template');
                 if (!template || !(template instanceof HTMLTemplateElement) || !template.content) return;
@@ -694,11 +746,11 @@
                         if(removeBtn) removeBtn.addEventListener('click', () => addedSegment.remove());
                     }
                     
-                    // DOM에 추가된 후, 화자 목록 갱신 (이전 수정사항)
                     updateTimelineCharacterOptions(); 
                 } catch (e) { console.error("Error adding timeline segment:", e); }
             }
             
+            // addListItem (로직 변경 없음)
             function addListItem(containerId, templateId, itemText = '') {
                 const template = D.getElementById(templateId); 
                 if (!template || !(template instanceof HTMLTemplateElement) || !template.content) return;
@@ -728,6 +780,7 @@
             D.getElementById('add-negative-btn')?.addEventListener('click', () => addListItem('negatives-container', 'negative-template'));
 
             
+            // getFieldValue (로직 변경 없음)
             function getFieldValue(fieldIdBase) {
                 const select = D.getElementById(`${fieldIdBase}-select`);
                 const input = D.getElementById(`${fieldIdBase}-input`); 
@@ -750,7 +803,7 @@
                 return ""; 
             }
 
-            // ⭐️⭐️⭐️ [버그 수정] ⭐️⭐️⭐️
+            // ⭐️⭐️⭐️ [JS 수정] JSON 생성 로직 변경 ⭐️⭐️⭐️
             D.getElementById('generate-json-btn')?.addEventListener('click', () => {
                 try {
                     errorMessage.classList.add('hidden');
@@ -764,12 +817,26 @@
                             camera_movement: getFieldValue('shot-camera_movement')
                         },
                         subject: {
+                            // ⭐️ [변경] 'characters' 배열 구조 변경
                             characters: [
-                                { name: D.getElementById('subject-char1-name').value.trim() },
-                                { name: D.getElementById('subject-char2-name').value.trim() },
-                                { name: D.getElementById('subject-char3-name').value.trim() },
-                                { name: D.getElementById('subject-char4-name').value.trim() }
-                            ].filter(c => c.name), 
+                                { 
+                                    name: D.getElementById('subject-char1-id').value.trim(),
+                                    description: D.getElementById('subject-char1-desc').value.trim()
+                                },
+                                { 
+                                    name: D.getElementById('subject-char2-id').value.trim(),
+                                    description: D.getElementById('subject-char2-desc').value.trim()
+                                },
+                                { 
+                                    name: D.getElementById('subject-char3-id').value.trim(),
+                                    description: D.getElementById('subject-char3-desc').value.trim()
+                                },
+                                { 
+                                    name: D.getElementById('subject-char4-id').value.trim(),
+                                    description: D.getElementById('subject-char4-desc').value.trim()
+                                }
+                            ].filter(c => c.name), // ID(name)가 있는 인물만 포함
+                            
                             description: getFieldValue('subject-description-input'), 
                             wardrobe: getFieldValue('subject-wardrobe'),
                             props: getFieldValue('subject-props-input'), 
@@ -818,13 +885,8 @@
                                         if (value === 'true') value = true;
                                         else if (value === 'false') value = false;
                                     }
-                                    
-                                    // ⭐️⭐️⭐️ [버그 수정] ⭐️⭐️⭐️
-                                    // 'Generate' 로직을 'Save' 로직과 동일하게 변경
-                                    // (이전: if(value || value === false) { ... })
-                                    // 이제 빈 값("")도 일단 할당하고, 나중에 cleanup 로직이 처리합니다.
+                                    // ⭐️ [변경] 'character' 필드에는 이제 '마크' 또는 '할머니' 같은 짧은 ID가 들어감
                                     current[key] = value; 
-                                    
                                 } else {
                                     current[key] = current[key] || {};
                                     current = current[key];
@@ -841,7 +903,7 @@
                                       .map(input => input.value.trim())
                                       .filter(Boolean);
                     if (D.getElementById('rule-match-dialogue').checked) {
-                        prompt.rules.push("대사는 반드시 지정된 캐릭터와 일치해야 함");
+                        prompt.rules.push("대사는 반드시 지정된 캐릭터(ID)와 일치해야 함");
                     }
 
                     // 제외 항목 채우기
@@ -849,18 +911,31 @@
                                          .map(input => input.value.trim())
                                          .filter(Boolean);
 
-                    // 빈 객체나 배열 정리 (이 로직이 이제 빈 "" character 필드를 제거해 줍니다)
+                    // 빈 객체나 배열 정리 (로직 변경 없음)
                     Object.keys(prompt).forEach(key => {
                         const value = prompt[key];
                         if (value === null || value === "") {
                             delete prompt[key];
                         } else if (Array.isArray(value) && value.length === 0) {
                             delete prompt[key];
-                        } else if (typeof value === 'object' && !Array.isArray(value) && value !== null) { // null 체크 추가
+                        } else if (typeof value === 'object' && !Array.isArray(value) && value !== null) { 
                             Object.keys(value).forEach(subKey => {
                                 const subValue = value[subKey];
-                                // ⭐️⭐️⭐️ [수정] 빈 문자열("")을 여기서 제거합니다.
-                                if (subValue === "" || subValue === null || (Array.isArray(subValue) && subValue.length === 0)) {
+                                
+                                // ⭐️ [변경] characters 배열의 빈 description도 제거
+                                if (Array.isArray(subValue)) {
+                                     if (subValue.length === 0) {
+                                        delete value[subKey];
+                                     } else if (key === 'subject' && subKey === 'characters') {
+                                        // 'characters' 배열 내부의 객체에서 빈 'description' 제거
+                                        subValue.forEach(char => {
+                                            if (char.description === "") {
+                                                delete char.description;
+                                            }
+                                        });
+                                     }
+                                }
+                                else if (subValue === "" || subValue === null) {
                                     delete value[subKey];
                                 }
                                 if (typeof subValue === 'object' && !Array.isArray(subValue) && subValue !== null && Object.keys(subValue).length === 0) {
@@ -884,6 +959,7 @@
                 }
             });
             
+            // copyJsonBtn (로직 변경 없음)
             copyJsonBtn?.addEventListener('click', () => {
                 if (!navigator.clipboard) {
                     try {
@@ -910,13 +986,14 @@ D.body.appendChild(textArea);
                 setTimeout(() => { copyJsonBtn.textContent = '복사하기'; }, 2000);
             });
 
-            // --- 저장/불러오기/삭제 로직 ---
+            // --- 저장/불러오기/삭제 로직 (새로운 ID/Desc 필드 반영) ---
             const saveNameInput = D.getElementById('save-name'); 
             const saveBtn = D.getElementById('save-btn'); 
             const loadSelect = D.getElementById('load-select'); 
             const loadBtn = D.getElementById('load-btn'); 
             const deleteBtn = D.getElementById('delete-btn');
             
+            // populateLoadSelect (로직 변경 없음)
             function populateLoadSelect() {
                 if (!loadSelect) return;
                 loadSelect.innerHTML = '<option value="">-- 선택 --</option>';
@@ -938,13 +1015,20 @@ D.body.appendChild(textArea);
                 });
             }
 
-            // '저장' 로직 (타임라인의 빈 값("")도 저장함 - 정상)
+            // ⭐️⭐️⭐️ [JS 수정] collectFormData (저장) 로직 변경 ⭐️⭐️⭐️
             function collectFormData() {
                 try {
                     const data = {};
-                    // 정적 필드 수집
+                    // 정적 필드 수집 (⭐️ [변경] 'subject-char*-*' 필드 포함)
                     form.querySelectorAll('input[type="text"][id]:not([data-key]), input[type="password"][id], textarea[id]:not([data-key]), select[id]:not([data-key]), input[type="checkbox"][id]:not([data-key])').forEach(el => {
                         if (el.closest('.timeline-segment, .rule-item, .negative-item')) return; 
+                        
+                        // ⭐️ [변경] Select/Input 쌍이 아닌 필드도 저장 (예: subject-char1-id)
+                        if (el.id.startsWith('subject-char') && (el.id.endsWith('-id') || el.id.endsWith('-desc'))) {
+                            data[el.id] = el.value.trim();
+                            return; // 다음 루프로
+                        }
+
                         const baseId = el.id.replace('-select', '').replace('-input', '');
                         const selectEl = D.getElementById(`${baseId}-select`);
                         const inputEl = D.getElementById(`${baseId}-input`);
@@ -963,7 +1047,7 @@ D.body.appendChild(textArea);
                         }
                     });
 
-                    // 동적 필드 수집
+                    // 동적 필드 수집 (로직 변경 없음)
                     data.timelineSegments = Array.from(D.querySelectorAll('#timeline-container .timeline-segment')).map(segment => {
                         const segmentData = {};
                         segment.querySelectorAll('[data-key]').forEach(input => {
@@ -973,7 +1057,7 @@ D.body.appendChild(textArea);
                                 if (index === keys.length - 1) { 
                                     let value = input.value.trim(); 
                                     if (input.tagName === 'SELECT' && (value === 'true' || value === 'false')) value = value === 'true'; 
-                                    current[key] = value; // ⭐️ 빈 값("")도 저장
+                                    current[key] = value; 
                                 }
                                 else { current[key] = current[key] || {}; current = current[key]; }
                             });
@@ -993,6 +1077,7 @@ D.body.appendChild(textArea);
                 }
             }
 
+            // ⭐️⭐️⭐️ [JS 수정] applyFormData (불러오기) 로직 변경 ⭐️⭐️⭐️
             function applyFormData(data) {
                 if (!data || typeof data !== 'object') { console.error("Invalid data for applyFormData:", data); return; }
 
@@ -1007,6 +1092,13 @@ D.body.appendChild(textArea);
                             // 값 적용
                             if (data.hasOwnProperty(el.id)) {
                                 const value = data[el.id];
+
+                                // ⭐️ [변경] 'subject-char*-*' 필드 값 적용
+                                if (el.id.startsWith('subject-char') && (el.id.endsWith('-id') || el.id.endsWith('-desc'))) {
+                                    el.value = value || '';
+                                    return; // 다음 루프로
+                                }
+
                                 if (el.tagName === 'SELECT') {
                                     const baseId = el.id.replace('-select', '');
                                     const inputEl = D.getElementById(`${baseId}-input`);
@@ -1036,7 +1128,16 @@ D.body.appendChild(textArea);
                         }
                     });
 
-                    // 2. 동적 요소 재생성
+                    // ⭐️ [추가] 이전 버전 데이터 호환 (예: subject-char1-name만 있을 경우)
+                    if (!data['subject-char1-id'] && data['subject-char1-name']) {
+                        D.getElementById('subject-char1-id').value = data['subject-char1-name'];
+                        D.getElementById('subject-char2-id').value = data['subject-char2-name'] || '';
+                        D.getElementById('subject-char3-id').value = data['subject-char3-name'] || '';
+                        D.getElementById('subject-char4-id').value = data['subject-char4-name'] || '';
+                    }
+
+
+                    // 2. 동적 요소 재생성 (로직 변경 없음)
                     const timelineContainer = D.getElementById('timeline-container'); 
                     timelineContainer.querySelectorAll('.timeline-segment').forEach(el => el.remove()); 
                     if (data.timelineSegments && Array.isArray(data.timelineSegments) && data.timelineSegments.length > 0) { 
@@ -1049,7 +1150,7 @@ D.body.appendChild(textArea);
                     rulesContainer.querySelectorAll('.rule-item').forEach(el => el.remove()); 
                     if (data.rules && Array.isArray(data.rules)) { 
                         data.rules.forEach(ruleText => {
-                            if (ruleText !== "대사는 반드시 지정된 캐릭터와 일치해야 함") {
+                            if (ruleText !== "대사는 반드시 지정된 캐릭터(ID)와 일치해야 함") {
                                 addListItem('rules-container', 'rule-template', ruleText);
                             }
                         });
@@ -1062,9 +1163,8 @@ D.body.appendChild(textArea);
                     }
 
                     const ruleCheckbox = D.getElementById('rule-match-dialogue'); 
-                    if(ruleCheckbox) ruleCheckbox.checked = data.ruleMatchDialogue || (data.rules && data.rules.includes("대사는 반드시 지정된 캐릭터와 일치해야 함")) || false;
+                    if(ruleCheckbox) ruleCheckbox.checked = data.ruleMatchDialogue || (data.rules && data.rules.includes("대사는 반드시 지정된 캐릭터(ID)와 일치해야 함")) || false;
 
-                    // 'Subject' 필드가 모두 적용된 후, 최종적으로 화자 목록 갱신
                     updateTimelineCharacterOptions(); 
 
                 } catch (error) {
